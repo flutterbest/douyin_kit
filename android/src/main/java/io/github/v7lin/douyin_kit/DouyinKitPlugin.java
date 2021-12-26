@@ -213,6 +213,7 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
         result.success(null);
     }
 
+    /// 授权
     private void handleAuthCall(MethodCall call, MethodChannel.Result result) {
         Authorization.Request request = new Authorization.Request();
         request.scope = call.argument("scope");
@@ -273,18 +274,18 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
 
     private MicroAppInfo parseMicroApp(MethodCall call) {
         MicroAppInfo microApp = new MicroAppInfo();
-        microApp.setAppId(call.argument("id"));
-        microApp.setAppTitle(call.argument("title"));
-        microApp.setAppUrl(call.argument("url"));
-        microApp.setDescription(call.argument("description"));
+        microApp.setAppId((String) call.argument("id"));
+        microApp.setAppTitle((String) call.argument("title"));
+        microApp.setAppUrl((String) call.argument("url"));
+        microApp.setDescription((String) call.argument("description"));
         return microApp;
     }
 
     private AnchorObject parseAnchor(MethodCall call) {
         AnchorObject anchor = new AnchorObject();
-        anchor.setAnchorTitle(call.argument("title"));
-        anchor.setAnchorBusinessType(call.argument("business_type"));
-        anchor.setAnchorContent(call.argument("content"));
+        anchor.setAnchorTitle((String) call.argument("title"));
+        anchor.setAnchorBusinessType((Integer) call.argument("business_type"));
+        anchor.setAnchorContent((String) call.argument("content"));
         return anchor;
     }
 
@@ -307,10 +308,10 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
 
     private ContactHtmlObject parseHtml(MethodCall call) {
         ContactHtmlObject html = new ContactHtmlObject();
-        html.setTitle(call.argument("title"));
-        html.setThumbUrl(call.argument("thumb_url"));
-        html.setHtml(call.argument("url"));
-        html.setDiscription(call.argument("discription"));
+        html.setTitle((String) call.argument("title"));
+        html.setThumbUrl((String) call.argument("thumb_url"));
+        html.setHtml((String) call.argument("url"));
+        html.setDiscription((String) call.argument("discription"));
         return html;
     }
 

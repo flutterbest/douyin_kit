@@ -1,21 +1,11 @@
 # douyin_kit
 
 flutter版抖音SDK
-
 ## docs
 
 * [抖音开放平台](https://open.douyin.com/platform)
 
 ## android
-
-```groovy
-buildscript {
-    dependencies {
-        // 3.5.4/3.6.4/4.x.x
-        classpath 'com.android.tools.build:gradle:3.5.4'
-    }
-}
-```
 
 ```
 # 不需要做任何额外接入工作
@@ -62,24 +52,5 @@ iOS 9系统策略更新，限制了http协议的访问，此外应用需要在�
 dependencies:
   douyin_kit:
     git:
-      url: https://github.com/rxreader/douyin_kit.git
+      url: https://github.com/flutterbest/douyin_kit.git
 ```
-
-* release
-
-```
-dependencies:
-  douyin_kit: ^${latestTag}
-```
-
-## Getting Started
-
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-

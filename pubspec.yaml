@@ -13,7 +13,7 @@ dependencies:
     sdk: flutter
 
   # build runner
-  json_annotation: ^3.0.1
+#   json_annotation: ^3.0.1
 
 dev_dependencies:
   flutter_test:
@@ -22,7 +22,7 @@ dev_dependencies:
   pedantic:
 
   build_runner:
-  json_serializable: ^3.5.0
+#   json_serializable: ^3.5.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

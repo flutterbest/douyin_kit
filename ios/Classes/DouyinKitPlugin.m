@@ -35,6 +35,7 @@
         result([NSNumber numberWithBool:YES]);
     } else if ([@"auth" isEqualToString:call.method]) {
         [self handleAuthCall:call result:result];
+
     } else if ([@"isSupportShare" isEqualToString:call.method]) {
         
     } else if ([@[@"shareImage", @"shareVideo", @"shareMicroApp", @"shareHashTags", @"shareAnchor"] containsObject:call.method]) {
@@ -53,6 +54,24 @@
 }
 
 - (void)handleAuthCall:(FlutterMethodCall *)call result:(FlutterResult)result {
+    DouyinOpenSDKAuthRequest *request = [[DouyinOpenSDKAuthRequest alloc] init];
+    request.permissions = [NSOrderedSet orderedSetWithObject:call.arguments[@"scope"]];
+    
+    
+    //可选附加权限（如有），用户可选择勾选/不勾选
+//    request.additionalPermissions = [NSOrderedSet orderedSetWithObjects:@{@"permission":@"friend_relation",@"defaultChecked":@"1"}, @{@"permission":@"message",@"defaultChecked":@"0"}, nil];
+    __weak typeof(self) ws = self;
+    UIViewController *vc = [[UIApplication sharedApplication] keyWindow].rootViewController;
+    [request sendAuthRequestViewController:vc completeBlock:^(DouyinOpenSDKAuthResponse * _Nonnull resp) {
+        __strong typeof(ws) sf = ws;
+        NSString *alertString = nil;
+        if (resp.errCode == 0) {
+            alertString = [NSString stringWithFormat:@"Author Success Code : %@, permission : %@",resp.code, resp.grantedPermissions];
+        } else{
+            alertString = [NSString stringWithFormat:@"Author failed code : %@, msg : %@",@(resp.errCode), resp.errString];
+        }
+        [self->_channel invokeMethod:@"onLoginResp" arguments:@{@"auth_code":resp.code, @"state":resp.state, @"granted_permissions":resp.grantedPermissions}];
+    }];
 }
 
 - (void)handleShareCall:(FlutterMethodCall *)call

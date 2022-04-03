@@ -70,8 +70,7 @@
         } else{
             alertString = [NSString stringWithFormat:@"Author failed code : %@, msg : %@",@(resp.errCode), resp.errString];
         }
-        [self->_channel invokeMethod:@"onLoginResp" arguments:@{@"auth_code":resp.code, @"state":resp.state, @"granted_permissions":resp.grantedPermissions}];
-    }];
+        [self->_channel invokeMethod:@"onLoginResp" arguments:@{@"auth_code":resp.code, @"state":@"", @"granted_permissions":@"", @"error_code":@0}];}];
 }
 
 - (void)handleShareCall:(FlutterMethodCall *)call

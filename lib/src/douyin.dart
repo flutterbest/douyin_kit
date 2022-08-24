@@ -166,6 +166,22 @@ class Douyin {
     );
   }
 
+  Future<void> ksShareVideo({
+    required List<Uri> videoUris,
+    String? state,
+  }) {
+    assert(videoUris.length <= 12);
+    assert(videoUris.every((Uri element) => element.isScheme('file')));
+    return _channel.invokeMethod<void>(
+      'ksShareVideo',
+      <String, dynamic>{
+        'video_uris':
+            videoUris.map((Uri element) => element.toString()).toList(),
+        if (state != null) 'state': state,
+      },
+    );
+  }
+
   // /// TODO: 没有相关限制信息
   // Future<void> shareMicroApp({
   //   String id,

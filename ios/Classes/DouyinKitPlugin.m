@@ -64,12 +64,11 @@
     if ([arg isKindOfClass:NSDictionary.class]) {
         NSArray *uris = arg[@"video_uris"];
         NSLog(@"test uris=%@", uris);
-//        uris = @[@"http://youface.taoke.run/uploads/video/166131750162072_24.mp4"];
         if ([uris isKindOfClass:NSArray.class]) {
             __block NSMutableArray *assetLocalIds = [NSMutableArray array];
             [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
                 
-                NSURL *url = [NSURL fileURLWithPath:[uris.firstObject stringByReplacingOccurrencesOfString:@"file://" withString:@""]]; // file://
+                NSURL *url = [NSURL URLWithString:uris.firstObject]; // file://
                 PHAssetChangeRequest *request = [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:url];
                NSString *localId = request.placeholderForCreatedAsset.localIdentifier;
                [assetLocalIds addObject:localId];

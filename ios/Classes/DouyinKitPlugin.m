@@ -1,6 +1,8 @@
 #import "DouyinKitPlugin.h"
 #import <DouyinOpenSDK/DouyinOpenSDKApplicationDelegate.h>
 #import <DouyinOpenSDK/DouyinOpenSDKAuth.h>
+#import <DouyinOpenSDK/DouyinOpenSDKShare.h>
+#import <Photos/Photos.h>
 
 @implementation DouyinKitPlugin {
     FlutterMethodChannel *_channel;
@@ -35,11 +37,10 @@
         result([NSNumber numberWithBool:YES]);
     } else if ([@"auth" isEqualToString:call.method]) {
         [self handleAuthCall:call result:result];
-
     } else if ([@"isSupportShare" isEqualToString:call.method]) {
         
     } else if ([@[@"shareImage", @"shareVideo", @"shareMicroApp", @"shareHashTags", @"shareAnchor"] containsObject:call.method]) {
-        [self handleShareCall:call result:result];
+        [self handleShareCall:call result:result]; // call.argument("video_uris")  call.arguments
     } else if ([@"isSupportShareToContacts" isEqualToString:call.method]) {
         
     } else if ([@[@"shareImageToContacts", @"shareHtmlToContacts"] containsObject:call.method]) {
@@ -54,27 +55,55 @@
 }
 
 - (void)handleAuthCall:(FlutterMethodCall *)call result:(FlutterResult)result {
-    DouyinOpenSDKAuthRequest *request = [[DouyinOpenSDKAuthRequest alloc] init];
-    request.permissions = [NSOrderedSet orderedSetWithObject:call.arguments[@"scope"]];
-    
-    
-    //可选附加权限（如有），用户可选择勾选/不勾选
-//    request.additionalPermissions = [NSOrderedSet orderedSetWithObjects:@{@"permission":@"friend_relation",@"defaultChecked":@"1"}, @{@"permission":@"message",@"defaultChecked":@"0"}, nil];
-    __weak typeof(self) ws = self;
-    UIViewController *vc = [[UIApplication sharedApplication] keyWindow].rootViewController;
-    [request sendAuthRequestViewController:vc completeBlock:^(DouyinOpenSDKAuthResponse * _Nonnull resp) {
-        __strong typeof(ws) sf = ws;
-        NSString *alertString = nil;
-        if (resp.errCode == 0) {
-            alertString = [NSString stringWithFormat:@"Author Success Code : %@, permission : %@",resp.code, resp.grantedPermissions];
-        } else{
-            alertString = [NSString stringWithFormat:@"Author failed code : %@, msg : %@",@(resp.errCode), resp.errString];
-        }
-        [self->_channel invokeMethod:@"onLoginResp" arguments:@{@"auth_code":resp.code, @"state":@"", @"granted_permissions":@"", @"error_code":@0}];}];
 }
 
 - (void)handleShareCall:(FlutterMethodCall *)call
                       result:(FlutterResult)result {
+    NSDictionary *arg = call.arguments;
+    NSLog(@"test arg=%@", arg);
+    if ([arg isKindOfClass:NSDictionary.class]) {
+        NSArray *uris = arg[@"video_uris"];
+        NSLog(@"test uris=%@", uris);
+//        uris = @[@"http://youface.taoke.run/uploads/video/166131750162072_24.mp4"];
+        if ([uris isKindOfClass:NSArray.class]) {
+            __block NSMutableArray *assetLocalIds = [NSMutableArray array];
+            [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+                
+                NSURL *url = [NSURL fileURLWithPath:[uris.firstObject stringByReplacingOccurrencesOfString:@"file://" withString:@""]]; // file://
+                PHAssetChangeRequest *request = [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:url];
+               NSString *localId = request.placeholderForCreatedAsset.localIdentifier;
+               [assetLocalIds addObject:localId];
+                
+            } completionHandler:^(BOOL success, NSError * _Nullable error) {
+                if (success) {
+                   dispatch_async(dispatch_get_main_queue(), ^{
+                       
+                       DouyinOpenSDKShareRequest *req = [[DouyinOpenSDKShareRequest alloc] init];
+                       req.mediaType = DouyinOpenSDKShareMediaTypeVideo;   // 需要传入分享类型
+                       req.landedPageType = DouyinOpenSDKLandedPageEdit;    // 设置分享的目标页面
+                       req.localIdentifiers = assetLocalIds;
+                       [req sendShareRequestWithCompleteBlock:^(DouyinOpenSDKShareResponse * _Nonnull respond) {
+                           if (respond.isSucceed) {
+
+                           // Share Succeed
+
+                           } else{
+
+                               NSLog(@"respond = %@", respond.errString);
+
+                           }
+                           if (result) {
+                               result(nil);
+                           }
+                       }];
+                   });
+                }
+            }];
+        }
+    }
+    if (result) {
+        result(nil);
+    }
 }
 
 - (void)handleShareToContactsCall:(FlutterMethodCall *)call

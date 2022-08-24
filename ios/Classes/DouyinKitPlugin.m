@@ -2,7 +2,11 @@
 #import <DouyinOpenSDK/DouyinOpenSDKApplicationDelegate.h>
 #import <DouyinOpenSDK/DouyinOpenSDKAuth.h>
 #import <DouyinOpenSDK/DouyinOpenSDKShare.h>
+#import <KwaiSDK/KSApi.h>
 #import <Photos/Photos.h>
+
+@interface DouyinKitPlugin () <KSApiDelegate>
+@end
 
 @implementation DouyinKitPlugin {
     FlutterMethodChannel *_channel;
@@ -30,6 +34,9 @@
     if ([@"registerApp" isEqualToString:call.method]) {
         NSString *clientKey = call.arguments[@"client_key"];
         [[DouyinOpenSDKApplicationDelegate sharedInstance] registerAppId:clientKey];
+        // reg
+        [KSApi registerApp:@"ks655836695748529649" universalLink:@"https://b3cgsa.xinstall.com.cn/tolink/" delegate:self];
+
         result(nil);
     } else if ([@"isInstalled" isEqualToString:call.method]) {
         result([NSNumber numberWithBool:[[DouyinOpenSDKApplicationDelegate sharedInstance] isAppInstalled]]);
@@ -49,12 +56,59 @@
         
     } else if ([@"openRecord" isEqualToString:call.method]) {
         [self handleOpenRecordCall:call result:result];
+    } else if ([@[@"ksShareVideo"] containsObject:call.method]) {
+        [self handleKSShareCall:call result:result]; // call.argument("video_uris")  call.arguments
+    } else if ([@"isSupportShareToContacts" isEqualToString:call.method]) {
     } else {
         result(FlutterMethodNotImplemented);
     }
 }
 
 - (void)handleAuthCall:(FlutterMethodCall *)call result:(FlutterResult)result {
+}
+
+
+- (void)handleKSShareCall:(FlutterMethodCall *)call
+                      result:(FlutterResult)result {
+    NSDictionary *arg = call.arguments;
+    if ([arg isKindOfClass:NSDictionary.class]) {
+        NSArray *uris = arg[@"video_uris"];
+        if ([uris isKindOfClass:NSArray.class]) {
+            __block NSMutableArray *assetLocalIds = [NSMutableArray array];
+            [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+                
+                NSURL *url = [NSURL URLWithString:uris.firstObject]; // file://
+                PHAssetChangeRequest *request = [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:url];
+               NSString *localId = request.placeholderForCreatedAsset.localIdentifier;
+               [assetLocalIds addObject:localId];
+                
+            } completionHandler:^(BOOL success, NSError * _Nullable error) {
+                if (success) {
+                   dispatch_async(dispatch_get_main_queue(), ^{
+                       
+                       
+                       KSShareMediaAsset *asset = [KSShareMediaAsset assetForPhotoLibrary:assetLocalIds.firstObject isImage:NO];
+                       KSShareMediaObject *object = [[KSShareMediaObject alloc] init];
+                       object.multipartAssets = @[asset];
+                       //object 参数配置
+                       KSShareMediaRequest *request = [[KSShareMediaRequest alloc] init];
+                       request.mediaFeature = KSShareMediaFeature_VideoPublish;
+                       request.mediaObject = object;
+                       [KSApi sendRequest:request completion:^(BOOL success) {
+                           if (result) {
+                               result(nil);
+                           }
+                           NSLog(@"kuaishou share = %d", success);
+                       }];
+                   });
+                }
+            }];
+            return;
+        }
+    }
+    if (result) {
+        result(nil);
+    }
 }
 
 - (void)handleShareCall:(FlutterMethodCall *)call
@@ -116,21 +170,39 @@
 #pragma mark - AppDelegate
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
-    return [[DouyinOpenSDKApplicationDelegate sharedInstance] application:application openURL:url sourceApplication:nil annotation:nil];
+    BOOL ret = [[DouyinOpenSDKApplicationDelegate sharedInstance] application:application openURL:url sourceApplication:nil annotation:nil];
+    if (!ret) {
+        ret = [KSApi handleOpenURL:url];
+    }
+    return ret;
 }
 
 - (BOOL)application:(UIApplication *)application
               openURL:(NSURL *)url
     sourceApplication:(NSString *)sourceApplication
            annotation:(id)annotation {
-    return [[DouyinOpenSDKApplicationDelegate sharedInstance] application:application openURL:url sourceApplication:sourceApplication annotation:annotation];
+    BOOL ret = [[DouyinOpenSDKApplicationDelegate sharedInstance] application:application openURL:url sourceApplication:sourceApplication annotation:annotation];
+    if (!ret) {
+        ret = [KSApi handleOpenURL:url];
+    }
+    return ret;
 }
 
 - (BOOL)application:(UIApplication *)application
             openURL:(NSURL *)url
             options:
                 (NSDictionary<UIApplicationOpenURLOptionsKey, id> *)options {
-    return [[DouyinOpenSDKApplicationDelegate sharedInstance] application:application openURL:url sourceApplication:options[UIApplicationOpenURLOptionsSourceApplicationKey] annotation:options[UIApplicationOpenURLOptionsAnnotationKey]];
+    BOOL ret = [[DouyinOpenSDKApplicationDelegate sharedInstance] application:application openURL:url sourceApplication:options[UIApplicationOpenURLOptionsSourceApplicationKey] annotation:options[UIApplicationOpenURLOptionsAnnotationKey]];
+    if (!ret) {
+        ret = [KSApi handleOpenURL:url];
+    }
+    return ret;
+}
+
+- (BOOL)application:(UIApplication*)application
+    continueUserActivity:(NSUserActivity*)userActivity
+      restorationHandler:(void (^)(NSArray*))restorationHandler {
+    return [KSApi handleOpenUniversalLink:userActivity];
 }
 
 @end

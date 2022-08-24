@@ -22,6 +22,8 @@ A new flutter plugin project.
   s.static_framework = true
   s.subspec 'vendor' do |sp|
     sp.dependency 'DouyinOpenSDK', '~> 4.0.0'
+    sp.dependency 'KwaiSDK', '~> 3.6.5'
+
   end
 
   # Flutter.framework does not contain a i386 slice.

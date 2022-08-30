@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
@@ -34,6 +35,7 @@ import com.kwai.opensdk.sdk.model.postshare.SingleVideoEdit;
 import com.kwai.opensdk.sdk.openapi.IKwaiAPIEventListener;
 import com.kwai.opensdk.sdk.openapi.IKwaiOpenAPI;
 import com.kwai.opensdk.sdk.openapi.KwaiOpenAPI;
+import com.kwai.opensdk.sdk.utils.AppInfoUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -192,9 +194,12 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         if ("registerApp".equals(call.method)) {
-            registerApp(call, result);
+
             // 这里初始化快手
             registerAppKs(call, result);
+
+            registerApp(call, result);
+
         } else if ("isInstalled".equals(call.method)) {
             DouYinOpenApi openApi = createOpenApi();
             result.success(openApi != null && openApi.isAppInstalled());
@@ -232,6 +237,10 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
     private void registerAppKs(MethodCall call, MethodChannel.Result result) {
 
         mKwaiOpenAPI = new KwaiOpenAPI(activity);
+
+        Log.i("KS//", "registerAppKs");
+        Log.i("KS//", AppInfoUtil.getAppName(activity));
+
         // 设置平台功能的配置选项
         OpenSdkConfig openSdkConfig = new OpenSdkConfig.Builder()
                 .setGoToMargetAppNotInstall(true) // 应用未安装，是否自动跳转应用市场
@@ -245,35 +254,31 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
         // 业务请求回调结果监听
         mKwaiOpenAPI.addKwaiAPIEventListerer(new IKwaiAPIEventListener() {
             @Override
-            public void onRespResult(@NonNull com.kwai.opensdk.sdk.model.base.BaseResp baseResp) {
-                // Log.i(TAG, "resp=" + resp);
-                // if (resp != null) {
-                // Log.i(TAG, "errorCode=" + resp.errorCode + ", errorMsg="
-                //     + resp.errorMsg + ", cmd=" + resp.getCommand()
-                //     + ", transaction=" + resp.transaction + ", platform=" + resp.platform);
-                // mCallbackTv.setText("CallBackResult: errorCode=" + resp.errorCode + ", errorMsg="
-                //     + resp.errorMsg + ", cmd=" + resp.getCommand()
-                //     + ", transaction=" + resp.transaction + ", platform=" + resp.platform);
-                // } else {
-                // mCallbackTv.setText("CallBackResult: resp is null");
-                // }
+            public void onRespResult(@NonNull com.kwai.opensdk.sdk.model.base.BaseResp resp) {
+                Log.i("KS//", "resp=" + resp);
+                if (resp != null) {
+                    Log.i("KS//", "errorCode=" + resp.errorCode + ", errorMsg="
+                        + resp.errorMsg + ", cmd=" + resp.getCommand()
+                        + ", transaction=" + resp.transaction + ", platform=" + resp.platform);
+                } else {
+                    Log.i("KS//", "CallBackResult: resp is null");
+                }
             }
         });
 
-        result.success(null);
     }
 
     // 分享
     private void handleShareCallKs(MethodCall call, MethodChannel.Result result) {
-        Share.Request request = new Share.Request();
         if (mKwaiOpenAPI == null) return;
 
+        Log.i("KS//", "handleShareCallKs");
         SingleVideoEdit.Req req = new SingleVideoEdit.Req();
         req.sessionId = mKwaiOpenAPI.getOpenAPISessionId();
         req.transaction = "SingleVideoEdit";
         // 设置功能调起快手支持应用，KwaiPlatform.Platform.KWAI_APP（快手主站），KwaiPlatform.Platform.NEBULA_APP（快手极速版）
         // 按数组顺序检查应用安装和版本情况，从中选择满足条件的第一个应用调起，若不设置则默认启动快手主站应用
-        req.setPlatformArray(new String[] {KwaiPlatform.Platform.NEBULA_APP, KwaiPlatform.Platform.KWAI_APP});
+        // req.setPlatformArray(new String[] {KwaiPlatform.Platform.KWAI_APP, KwaiPlatform.Platform.NEBULA_APP});
 
         req.mediaInfo = new PostShareMediaInfo();
 
@@ -288,11 +293,11 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
         // req.thirdExtraInfo
         // 业务参数mediaInfoMap（传入格式key1:value1;key2:value2）
 
-        request.mState = call.argument("state");
+        try {
+            Log.i("KS//", "req");
 
-          try {
             mKwaiOpenAPI.sendReq(req, activity);
-          } catch (Exception e) {}
+        } catch (Exception e) {}
 
         result.success(null);
     }

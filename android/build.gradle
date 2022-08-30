@@ -16,6 +16,10 @@ rootProject.allprojects {
     repositories {
         google()
         jcenter()
+
+        // 快手
+        maven { url 'https://repo1.maven.org/maven2/' }
+
         maven { url 'https://artifact.bytedance.com/repository/AwemeOpenSDK' }
     }
 
@@ -30,6 +34,13 @@ android {
 
     defaultConfig {
         minSdkVersion 16
+
+
+        manifestPlaceholders = [
+            "KWAI_APP_ID": "ks00000000000", // 申请分配的appId
+            "KWAI_SCOPE" : "user_info"      // 账号授权需要申请的scope权限，多个scope可以使用","分割，代表需要用户授权什么能力
+        ]
+
 
         // library 混淆 -> 随 library 引用，自动添加到 apk 打包混淆
         consumerProguardFiles 'consumer-rules.pro'
@@ -54,4 +65,8 @@ android {
 dependencies {
     implementation 'com.bytedance.ies.ugc.aweme:opensdk-china-external:0.1.8.0'
     implementation 'com.bytedance.ies.ugc.aweme:opensdk-common:0.1.8.0'
+
+    // 快手sdk
+    // implementation 'com.kwai.opensdk.sdk:kwai-opensdk-withauth:3.0.4'
+    implementation 'com.github.kwaisocial:kwai-opensdk-withauth:3.0.4'
 }

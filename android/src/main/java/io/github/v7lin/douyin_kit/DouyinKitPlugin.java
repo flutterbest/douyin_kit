@@ -27,6 +27,13 @@ import com.bytedance.sdk.open.douyin.ShareToContact;
 import com.bytedance.sdk.open.douyin.api.DouYinOpenApi;
 import com.bytedance.sdk.open.douyin.model.ContactHtmlObject;
 import com.bytedance.sdk.open.douyin.model.OpenRecord;
+import com.kwai.opensdk.sdk.constants.KwaiPlatform;
+import com.kwai.opensdk.sdk.model.base.OpenSdkConfig;
+import com.kwai.opensdk.sdk.model.postshare.PostShareMediaInfo;
+import com.kwai.opensdk.sdk.model.postshare.SingleVideoEdit;
+import com.kwai.opensdk.sdk.openapi.IKwaiAPIEventListener;
+import com.kwai.opensdk.sdk.openapi.IKwaiOpenAPI;
+import com.kwai.opensdk.sdk.openapi.KwaiOpenAPI;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -148,6 +155,13 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
 
         if (register.compareAndSet(true, false)) {
             DouyinReceiver.unregisterReceiver(binding.getApplicationContext(), douyinReceiver);
+
+
+            // --- 快手 Start
+            // 移除对回调结果的监听，请及时移除不用的监听避免内存泄漏问题
+            if (mKwaiOpenAPI != null) {
+                mKwaiOpenAPI.removeKwaiAPIEventListerer();
+            }
         }
     }
 
@@ -180,6 +194,7 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
         if ("registerApp".equals(call.method)) {
             registerApp(call, result);
             // 这里初始化快手
+            registerAppKs(call, result);
         } else if ("isInstalled".equals(call.method)) {
             DouYinOpenApi openApi = createOpenApi();
             result.success(openApi != null && openApi.isAppInstalled());
@@ -205,10 +220,84 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
             handleOpenRecordCall(call, result);
         } else if ("ksShareVideo".equals(call.method)) {
            // 这里写分享到快手的代码
+            handleShareCallKs(call, result);
         }else {
             result.notImplemented();
         }
     }
+
+    // --- 快手 Start
+    private IKwaiOpenAPI mKwaiOpenAPI; // 声明使用接口
+    // 初始化
+    private void registerAppKs(MethodCall call, MethodChannel.Result result) {
+
+        mKwaiOpenAPI = new KwaiOpenAPI(activity);
+        // 设置平台功能的配置选项
+        OpenSdkConfig openSdkConfig = new OpenSdkConfig.Builder()
+                .setGoToMargetAppNotInstall(true) // 应用未安装，是否自动跳转应用市场
+                .setGoToMargetAppVersionNotSupport(true) // 应用已安装但版本不支持，是否自动跳转应用市场
+                .setSetNewTaskFlag(true) // 设置启动功能页面是否使用新的页面栈
+                .setSetClearTaskFlag(true) // 设置启动功能页面是否清除当前页面栈，当isSetNewTaskFlag为true时生效
+                .setShowDefaultLoading(false) // 是否显示默认的loading页面作为功能启动的过渡
+                .build();
+        mKwaiOpenAPI.setOpenSdkConfig(openSdkConfig);
+
+        // 业务请求回调结果监听
+        mKwaiOpenAPI.addKwaiAPIEventListerer(new IKwaiAPIEventListener() {
+            @Override
+            public void onRespResult(@NonNull com.kwai.opensdk.sdk.model.base.BaseResp baseResp) {
+                // Log.i(TAG, "resp=" + resp);
+                // if (resp != null) {
+                // Log.i(TAG, "errorCode=" + resp.errorCode + ", errorMsg="
+                //     + resp.errorMsg + ", cmd=" + resp.getCommand()
+                //     + ", transaction=" + resp.transaction + ", platform=" + resp.platform);
+                // mCallbackTv.setText("CallBackResult: errorCode=" + resp.errorCode + ", errorMsg="
+                //     + resp.errorMsg + ", cmd=" + resp.getCommand()
+                //     + ", transaction=" + resp.transaction + ", platform=" + resp.platform);
+                // } else {
+                // mCallbackTv.setText("CallBackResult: resp is null");
+                // }
+            }
+        });
+
+        result.success(null);
+    }
+
+    // 分享
+    private void handleShareCallKs(MethodCall call, MethodChannel.Result result) {
+        Share.Request request = new Share.Request();
+        if (mKwaiOpenAPI == null) return;
+
+        SingleVideoEdit.Req req = new SingleVideoEdit.Req();
+        req.sessionId = mKwaiOpenAPI.getOpenAPISessionId();
+        req.transaction = "SingleVideoEdit";
+        // 设置功能调起快手支持应用，KwaiPlatform.Platform.KWAI_APP（快手主站），KwaiPlatform.Platform.NEBULA_APP（快手极速版）
+        // 按数组顺序检查应用安装和版本情况，从中选择满足条件的第一个应用调起，若不设置则默认启动快手主站应用
+        req.setPlatformArray(new String[] {KwaiPlatform.Platform.NEBULA_APP, KwaiPlatform.Platform.KWAI_APP});
+
+        req.mediaInfo = new PostShareMediaInfo();
+
+        VideoObject videoObject = parseVideo(call);
+        req.mediaInfo.mMultiMediaAssets = videoObject.mVideoPaths;
+
+        // 设置不接受fallback
+        // req.mediaInfo.mDisableFallback = false;
+        // 输入透传的额外参数extraInfo
+        // req.mediaInfo.mExtraInfo
+        // 第三方埋点数据额外参数thirdExtraInfo
+        // req.thirdExtraInfo
+        // 业务参数mediaInfoMap（传入格式key1:value1;key2:value2）
+
+        request.mState = call.argument("state");
+
+          try {
+            mKwaiOpenAPI.sendReq(req, activity);
+          } catch (Exception e) {}
+
+        result.success(null);
+    }
+    // --- 快手 End
+
 
     private void registerApp(MethodCall call, MethodChannel.Result result) {
         final String clientKey = call.argument("client_key");

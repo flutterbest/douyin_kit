@@ -179,6 +179,7 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         if ("registerApp".equals(call.method)) {
             registerApp(call, result);
+            // 这里初始化快手
         } else if ("isInstalled".equals(call.method)) {
             DouYinOpenApi openApi = createOpenApi();
             result.success(openApi != null && openApi.isAppInstalled());
@@ -202,7 +203,9 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
             result.success(openApi != null && openApi.isSupportOpenRecordPage());
         } else if ("openRecord".equals(call.method)) {
             handleOpenRecordCall(call, result);
-        } else {
+        } else if ("ksShareVideo".equals(call.method)) {
+           // 这里写分享到快手的代码
+        }else {
             result.notImplemented();
         }
     }

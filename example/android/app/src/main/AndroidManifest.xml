@@ -41,7 +41,10 @@
 
     </application>
     <queries>
-        <package android:name="com.smile.gifmaker"/>  // 快手主站
-        <package android:name="com.kuaishou.nebula"/> // 快手极速版
+        <package android:name="com.smile.gifmaker"/>
+        <package android:name="com.kuaishou.nebula"/>
+        <!--允许查询抖音和抖音极速版的软件包信息-->
+        <package android:name="com.ss.android.ugc.aweme" />
+        <package android:name="com.ss.android.ugc.aweme.lite" />
     </queries>
 </manifest>

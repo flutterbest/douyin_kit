@@ -35,7 +35,6 @@ import com.kwai.opensdk.sdk.model.postshare.SingleVideoEdit;
 import com.kwai.opensdk.sdk.openapi.IKwaiAPIEventListener;
 import com.kwai.opensdk.sdk.openapi.IKwaiOpenAPI;
 import com.kwai.opensdk.sdk.openapi.KwaiOpenAPI;
-import com.kwai.opensdk.sdk.utils.AppInfoUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -239,7 +238,6 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
         mKwaiOpenAPI = new KwaiOpenAPI(activity);
 
         Log.i("KS//", "registerAppKs");
-        Log.i("KS//", AppInfoUtil.getAppName(activity));
 
         // 设置平台功能的配置选项
         OpenSdkConfig openSdkConfig = new OpenSdkConfig.Builder()
@@ -278,7 +276,7 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
         req.transaction = "SingleVideoEdit";
         // 设置功能调起快手支持应用，KwaiPlatform.Platform.KWAI_APP（快手主站），KwaiPlatform.Platform.NEBULA_APP（快手极速版）
         // 按数组顺序检查应用安装和版本情况，从中选择满足条件的第一个应用调起，若不设置则默认启动快手主站应用
-        // req.setPlatformArray(new String[] {KwaiPlatform.Platform.KWAI_APP, KwaiPlatform.Platform.NEBULA_APP});
+        req.setPlatformArray(new String[] {KwaiPlatform.Platform.KWAI_APP, KwaiPlatform.Platform.NEBULA_APP});
 
         req.mediaInfo = new PostShareMediaInfo();
 

@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.doudtong.app">
-   <application
-        android:label="example"
+    <application
+        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
@@ -37,5 +37,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+
     </application>
+    <queries>
+        <package android:name="com.smile.gifmaker"/>
+        <package android:name="com.kuaishou.nebula"/>
+        <!--允许查询抖音和抖音极速版的软件包信息-->
+        <package android:name="com.ss.android.ugc.aweme" />
+        <package android:name="com.ss.android.ugc.aweme.lite" />
+    </queries>
 </manifest>

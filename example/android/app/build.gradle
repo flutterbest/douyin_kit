@@ -26,7 +26,7 @@ apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -43,10 +43,15 @@ android {
 
     defaultConfig {
         applicationId "com.doudtong.app"
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 30
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+
+        manifestPlaceholders = [
+            "KWAI_APP_ID": "ks00000000000", // 申请分配的appId
+            "KWAI_SCOPE" : "user_info"      // 账号授权需要申请的scope权限，多个scope可以使用","分割，代表需要用户授权什么能力
+        ]
     }
 
     signingConfigs {

@@ -31,7 +31,7 @@ import com.bytedance.sdk.open.douyin.model.OpenRecord;
 import com.kwai.opensdk.sdk.constants.KwaiPlatform;
 import com.kwai.opensdk.sdk.model.base.OpenSdkConfig;
 import com.kwai.opensdk.sdk.model.postshare.PostShareMediaInfo;
-import com.kwai.opensdk.sdk.model.postshare.SingleVideoEdit;
+import com.kwai.opensdk.sdk.model.postshare.SingleVideoPublish;
 import com.kwai.opensdk.sdk.openapi.IKwaiAPIEventListener;
 import com.kwai.opensdk.sdk.openapi.IKwaiOpenAPI;
 import com.kwai.opensdk.sdk.openapi.KwaiOpenAPI;
@@ -237,7 +237,7 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
 
         mKwaiOpenAPI = new KwaiOpenAPI(activity);
 
-        Log.i("KS//", "registerAppKs");
+        Log.i("SHARE----KS//", "registerAppKs");
 
         // 设置平台功能的配置选项
         OpenSdkConfig openSdkConfig = new OpenSdkConfig.Builder()
@@ -253,13 +253,13 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
         mKwaiOpenAPI.addKwaiAPIEventListerer(new IKwaiAPIEventListener() {
             @Override
             public void onRespResult(@NonNull com.kwai.opensdk.sdk.model.base.BaseResp resp) {
-                Log.i("KS//", "resp=" + resp);
+                Log.i("SHARE----KS//", "resp=" + resp);
                 if (resp != null) {
-                    Log.i("KS//", "errorCode=" + resp.errorCode + ", errorMsg="
+                    Log.i("SHARE----KS//", "errorCode=" + resp.errorCode + ", errorMsg="
                         + resp.errorMsg + ", cmd=" + resp.getCommand()
                         + ", transaction=" + resp.transaction + ", platform=" + resp.platform);
                 } else {
-                    Log.i("KS//", "CallBackResult: resp is null");
+                    Log.i("SHARE----KS//", "CallBackResult: resp is null");
                 }
             }
         });
@@ -270,17 +270,17 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
     private void handleShareCallKs(MethodCall call, MethodChannel.Result result) {
         if (mKwaiOpenAPI == null) return;
 
-        Log.i("KS//", "handleShareCallKs");
-        SingleVideoEdit.Req req = new SingleVideoEdit.Req();
+        Log.i("SHARE----KS//", "handleShareCallKs");
+        SingleVideoPublish.Req req = new SingleVideoPublish.Req();
         req.sessionId = mKwaiOpenAPI.getOpenAPISessionId();
-        req.transaction = "SingleVideoEdit";
+        req.transaction = "SingleVideoPublish";
         // 设置功能调起快手支持应用，KwaiPlatform.Platform.KWAI_APP（快手主站），KwaiPlatform.Platform.NEBULA_APP（快手极速版）
         // 按数组顺序检查应用安装和版本情况，从中选择满足条件的第一个应用调起，若不设置则默认启动快手主站应用
         req.setPlatformArray(new String[] {KwaiPlatform.Platform.KWAI_APP, KwaiPlatform.Platform.NEBULA_APP});
 
         req.mediaInfo = new PostShareMediaInfo();
 
-        VideoObject videoObject = parseVideo(call);
+        VideoObject videoObject = parseKsVideo(call, req);
         req.mediaInfo.mMultiMediaAssets = videoObject.mVideoPaths;
 
         // 设置不接受fallback
@@ -292,8 +292,6 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
         // 业务参数mediaInfoMap（传入格式key1:value1;key2:value2）
 
         try {
-            Log.i("KS//", "req");
-
             mKwaiOpenAPI.sendReq(req, activity);
         } catch (Exception e) {}
 
@@ -356,12 +354,30 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
         return image;
     }
 
+    private VideoObject parseKsVideo(MethodCall call, SingleVideoPublish.Req req) {
+        VideoObject video = new VideoObject();
+        ArrayList<String> videoPaths = new ArrayList<>();
+        List<String> videoUris = call.argument("video_uris");
+        for (String videoUri : videoUris) {
+            String uri = KwaiFileProviderUtil.generateFileUriPath(activity, new File(Uri.parse(videoUri).getPath()), req, mKwaiOpenAPI);
+            Log.i("SHARE----KS//", uri);
+            videoPaths.add(uri);
+        }
+
+        video.mVideoPaths = videoPaths;
+        return video;
+    }
+
     private VideoObject parseVideo(MethodCall call) {
         VideoObject video = new VideoObject();
         ArrayList<String> videoPaths = new ArrayList<>();
         List<String> videoUris = call.argument("video_uris");
         for (String videoUri : videoUris) {
-            videoPaths.add(getShareFilePath(videoUri));
+
+            String uri = getShareFilePath(videoUri);
+            Log.i("SHARE----DY//", uri);
+
+            videoPaths.add(uri);
         }
         video.mVideoPaths = videoPaths;
         return video;
@@ -431,7 +447,6 @@ public final class DouyinKitPlugin implements FlutterPlugin, ActivityAware, Meth
     }
 
     // ---
-
     private String getShareFilePath(String fileUri) {
         DouYinOpenApi openApi = createOpenApi();
         if (openApi != null && openApi.isShareSupportFileProvider()) {
